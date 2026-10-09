@@ -24,7 +24,7 @@ $(OBJ_DIR)/text2board_converter.o: $(GEN_H)
 
 $(OBJ_DIR)/c2glyph.o: $(GEN_CPP)
 	@mkdir -p $(@D)
-	$(CXX) $(CPPFLAGS) -c $< -o $@ $(LIB_OBJS)
+	$(CXX) $(CPPFLAGS) -c $< -o $@
 
 $(OBJ_DIR)/%.o: %.cpp
 	@mkdir -p $(@D)
