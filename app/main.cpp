@@ -3,6 +3,7 @@
 #include "text2board_converter.h"
 #include <iostream>
 #include <string>
+#include <memory>
 
 int main(int argc, char *argv[])
 {
@@ -13,17 +14,23 @@ int main(int argc, char *argv[])
     }
     
     std::string input_text = argv[1];
-    Text2BoardConverter converter;
-    converter.setInputText(input_text);
-    converter.setHeight(16);
-    converter.setDefaultBackgroundColor(DotColor::WHITE);
-    converter.setDefaultForegroundColor(DotColor::BLACK);
-    converter.convert();
-    
-    DotBoard *board = converter.dotBoard;
+    std::unique_ptr<Text2BoardConverter> converter = std::make_unique<Text2BoardConverter>();
+    converter->setInputText(input_text);
+    converter->setHeight(16);
+    converter->setDefaultBackgroundColor(DotColor::WHITE);
+    converter->setDefaultForegroundColor(DotColor::BLACK);
 
-    OutputShell output_shell(board);
-    output_shell.display();
+    try{
+        converter->convert();
+    } catch (const std::exception &e){
+        std::cerr << e.what() << std::endl;
+        return 1;
+    }
+
+    DotBoard *board = converter->dotBoard.get();
+
+    OutputShell outputShell(board);
+    outputShell.display();
 
     return 0;
 }

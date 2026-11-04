@@ -7,7 +7,7 @@
 
 
 //一度JISをEUC-JPに変換してからUTF-8に変換する
-uint32_t jisToUtf8(uint16_t jis, iconv_t conv, uint8_t *length) {
+void jisToUtf8(uint16_t jis, iconv_t conv, uint32_t *out_utf8, uint8_t *out_length) {
 
     char input[2] = {0};
     char output[4] = {0};
@@ -31,31 +31,18 @@ uint32_t jisToUtf8(uint16_t jis, iconv_t conv, uint8_t *length) {
     size_t res = iconv(conv, &in_ptr, &in_bytes, &out_ptr, &out_bytes);
 
     if (res == (size_t)-1) {
-        std::cerr << ("Failed to convert EUC-JP \"" +
-                                std::to_string(jis) + "\" to UTF-8") << std::endl;
-        std::cout << "JIS value: " << jis << std::endl;
-        std::cout << "UTF-8 value: " << res << std::endl;
-        std::cout << "Input bytes: ";
-        for (size_t i = 0; i < sizeof(input); ++i) {
-            std::cout << std::hex << (unsigned int)(unsigned char)input[i] << " ";
-        }
-        std::cout << std::dec << std::endl;
-        std::cout << "Output bytes: ";
-        for (size_t i = 0; i < sizeof(output); ++i) {
-            std::cout << std::hex << (unsigned int)(unsigned char)output[i] << " ";
-        }
-        std::cout << std::dec << std::endl; 
         iconv_close(conv);
-        exit(EXIT_FAILURE);
+        throw std::runtime_error("Failed to convert JIS" + std::to_string(jis) + " to UTF-8");
     }
 
     uint32_t utf8 = 0;
     for (int i = 0; i < (int)(sizeof(output) - (int)out_bytes); ++i) {
         utf8 = (utf8 << 8) | (unsigned char)output[i];
     }
-    *length = sizeof(output) - out_bytes;
+    *out_length = sizeof(output) - out_bytes;
+    *out_utf8 = utf8;
 
-    return utf8;
+    return;
 }
 
 BdfParser::BdfParser() {}
@@ -73,16 +60,17 @@ BdfParser::~BdfParser() {
 
 
 void BdfParser::parse(const std::string &filename) {
-    std::ifstream file(filename);
-    if(!file.is_open()) {
-        std::cerr << "Failed to open file: " << filename << std::endl;
-        exit(EXIT_FAILURE);
-    }
 
-    iconv_t conv = iconv_open("UTF-8", "EUC-JP");
-    if(conv == (iconv_t)-1) {
-        std::cerr << "Failed to open iconv" << std::endl;
-        exit(EXIT_FAILURE);
+    std::ifstream file(filename);
+    iconv_t conv;
+
+    
+    if (!file.is_open()) {
+        throw std::runtime_error("Failed to open file: " + filename);
+    }
+    conv = iconv_open("UTF-8", "EUC-JP");
+    if (conv == (iconv_t)-1) {
+        throw std::runtime_error("Failed to open iconv\n");
     }
 
     std::string line;
@@ -109,7 +97,7 @@ void BdfParser::parse(const std::string &filename) {
                         break;
                     }
                     jis = e;
-                    utf8 = jisToUtf8(jis, conv, &length);
+                    jisToUtf8(jis, conv, &utf8, &length);
                 } else if (token == "DWIDTH") {
                     iss >> glyph.dwidth >> glyph.dheight;
                 } else if (token == "BBX") {
@@ -119,8 +107,8 @@ void BdfParser::parse(const std::string &filename) {
                         glyph.bitmap.push_back(line);
                     }
                     if (glyph.bitmap.size() != BITMAP_HEIGHT || glyph.bbx_h != BITMAP_HEIGHT) {
-                        std::cerr << "Bitmap size or BBX height does not match 16 for encoding " << utf8 << std::endl;
-                        exit(EXIT_FAILURE);
+                        iconv_close(conv);
+                        throw std::runtime_error("Bitmap size or BBX height does not match 16 for encoding " + std::to_string(utf8));
                     }
                     glyph.encoding = utf8;
                     glyph.length = length;
@@ -132,7 +120,6 @@ void BdfParser::parse(const std::string &filename) {
     }
 
     file.close();
-
     iconv_close(conv);
     return;
 }
@@ -148,7 +135,12 @@ int main(int argc, char *argv[]){
     BdfParser parser;
 
     for(int i = 3; i < argc; ++i) {
-        parser.parse(argv[i]);
+        try {
+            parser.parse(argv[i]);
+        } catch (const std::exception &e) {
+            std::cerr << e.what() << std::endl;
+            return 1;
+        }
     }
 
     int num_characters = parser.utf8ToGlyph.size();

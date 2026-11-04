@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-static size_t utf8_char_len(unsigned char c) {
+static size_t utf8CharLen(unsigned char c) {
     if (c < 0x80) // 0xxxxxxx
         return 1;
     if ((c & 0xE0) == 0xC0) // 110xxxxx
@@ -18,10 +18,9 @@ static size_t utf8_char_len(unsigned char c) {
 static void str2strs(const std::string &str, std::vector<std::string> &strs) {
     strs.clear();
     for (size_t i = 0; i < str.size();) {
-        size_t len = utf8_char_len(static_cast<unsigned char>(str[i]));
+        size_t len = utf8CharLen(static_cast<unsigned char>(str[i]));
         if (len == 0) {
-            std::cerr << "Invalid UTF-8 character at position " << i << std::endl;
-            exit(EXIT_FAILURE);
+            throw std::runtime_error("Invalid UTF-8 character " + std::to_string(i));
         }
         strs.push_back(str.substr(i, len));
         i += len;
@@ -32,84 +31,75 @@ static void str2strs(const std::string &str, std::vector<std::string> &strs) {
 
 void Text2BoardConverter::convert()
 {
-    if (input_text.empty()) {
-        std::cerr << "Input text is empty." << std::endl;
-        return;
+    if (inputText.empty()) {
+        throw std::runtime_error("Input text is empty.");
     }
-
-    if(height <= 0){
-        std::cerr << "Invalid board height." << std::endl;
-        std::cout << "height = " << height << std::endl;
-        return;
+    if (height <= 0) {
+        throw std::runtime_error("Invalid board height:" + std::to_string(height));
     }
-
-    if(height % 16 != 0) {
-        std::cerr << "Height must be a multiple of 16." << std::endl;
-        std::cout << "height = " << height << std::endl;
-        return;
+    if (height % 16 != 0) {
+        throw std::runtime_error("Height must be a multiple of 16:" + std::to_string(height));
     }
-    
     scale = height / 16;
 
     std::vector<uint32_t> encodings;
-    std::vector<int> glyph_indices;
+    std::vector<int> glyphIndices;
 
     text2encodings(encodings);
     for (uint32_t encoding : encodings) {
-        glyph_indices.push_back(searchGlyphIndex(encoding));
+        int index = searchGlyphIndex(encoding);
+        glyphIndices.push_back(index);
     }
 
-    width = calc_width(glyph_indices);
+    width = calcWidth(glyphIndices);
 
-    dotBoard = new DotBoard(width, height);
+    dotBoard = std::make_unique<DotBoard>(width, height);
     
-    int x_offset = 0;
-    for(int i = 0; i < (int)glyph_indices.size(); i++) {
-        int glyph_index = glyph_indices[i];
-        const Glyph &glyph = C2Glyph::glyphs[glyph_index];
-        int glyph_width = glyph.bbx_w * scale;
+    int xOffset = 0;
+    for(int i = 0; i < (int)glyphIndices.size(); i++) {
+        int glyphIndex = glyphIndices[i];
+        const Glyph &glyph = C2Glyph::glyphs[glyphIndex];
+        int glyphWidth = glyph.bbx_w * scale;
         
         for(int y = 0; y < height; y++) {
-            for(int x = 0; x < glyph_width; x++) {
+            for(int x = 0; x < glyphWidth; x++) {
                 if (glyph.bitmap[y / scale] & (1 << (16 - 1 - (x / scale)))) { // bitmapは16ビット幅固定左詰め
-                    dotBoard->board[y][x_offset + x] = defaultForegroundColor;
+                    dotBoard->board[y][xOffset + x] = defaultForegroundColor;
                 } else {
-                    dotBoard->board[y][x_offset + x] = defaultBackgroundColor;
+                    dotBoard->board[y][xOffset + x] = defaultBackgroundColor;
                 }
             }
         }
-        
-        x_offset += glyph_width;
+        xOffset += glyphWidth;
     }
 
     return;
 }
 
 
-int Text2BoardConverter::calc_width(const std::vector<int> &glyph_indices) {
+int Text2BoardConverter::calcWidth(const std::vector<int> &glyphIndices) {
     int width = 0;
 
-    for (int glyph_index : glyph_indices) {
-        width += C2Glyph::glyphs[glyph_index].bbx_w * scale;
+    for (int glyphIndex : glyphIndices) {
+        width += C2Glyph::glyphs[glyphIndex].bbx_w * scale;
     }
     return width;
 }
 
 void Text2BoardConverter::text2encodings(std::vector<uint32_t> &encodings) {
+
     encodings.clear();
 
     std::vector<std::string> strs;
-    str2strs(input_text, strs);
+    str2strs(inputText, strs);
     for (const std::string &s : strs) {
-        size_t char_len = s.size();
+        size_t charLen = s.size();
         uint32_t encoding = 0;
-        for (size_t i = 0; i < char_len; i++) {
+        for (size_t i = 0; i < charLen; i++) {
             encoding = (encoding << 8) | static_cast<unsigned char>(s[i]);
         }
         encodings.push_back(encoding);
     }
-    
-    return;
 }
 
 int Text2BoardConverter::searchGlyphIndex(uint32_t encoding) {
@@ -126,8 +116,7 @@ int Text2BoardConverter::searchGlyphIndex(uint32_t encoding) {
             right = mid - 1;
         }
     }
-    std::cerr << "Encoding not found: " << encoding << std::endl;
-    exit(EXIT_FAILURE);
-    return -1;
+
+    throw std::runtime_error("Encoding not found: " + std::to_string(encoding));
 }
 

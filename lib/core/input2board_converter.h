@@ -1,15 +1,14 @@
 #pragma once
 
-#include "io_type.h"
 #include "dotboard.h"
+#include "io_type.h"
+#include <memory>
 
 class Input2BoardConverter{
 public:
 
     InputType inputType;
-    DotBoard *dotBoard = nullptr;
+    std::unique_ptr<DotBoard> dotBoard = nullptr;
 
     virtual void convert() = 0;
-    
-    ~Input2BoardConverter();
 };

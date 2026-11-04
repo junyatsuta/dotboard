@@ -1,6 +1,6 @@
 include ../../config.mk
 
-SRCS := color.cpp dotboard.cpp input2BoardConverter.cpp
+SRCS := color.cpp dotboard.cpp input2board_converter.cpp
 OBJS := $(addprefix $(OBJ_DIR)/,$(SRCS:.cpp=.o))
 DEPS := $(OBJS:.o=.d)
 
