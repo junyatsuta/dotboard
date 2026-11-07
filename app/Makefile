@@ -9,19 +9,16 @@ CPPFLAGS += -I$(TOP_DIR)/lib/output/shell
 CPPFLAGS += -I$(TOP_DIR)/lib/core
 CPPFLAGS += -I$(TOP_DIR)/lib/input/text
 
-LIB_OBJS := \
-	$(wildcard $(OBJ_ROOT)/lib/core/*.o) \
-	$(wildcard $(OBJ_ROOT)/lib/output/shell/*.o) \
-	$(wildcard $(OBJ_ROOT)/lib/input/text/*.o)
+LIBS := $(LIB_DIR)/libdotboard_output_shell.a $(LIB_DIR)/libdotboard_input_text.a $(LIB_DIR)/libdotboard_core.a
 
 .PHONY: all clean
 
 # ターゲットとレシピ
 all: $(TARGET)
 
-$(TARGET): $(OBJS) $(LIB_OBJS)
+$(TARGET): $(OBJS) $(LIBS)
 	@mkdir -p $(BIN_DIR) $(OBJ_DIR)
-	$(CXX) $(CPPFLAGS) -o $(TARGET) $(OBJS) $(LIB_OBJS)
+	$(CXX) $(CPPFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
 
 $(OBJ_DIR)/%.o: %.cpp
 	@mkdir -p $(OBJ_DIR)
@@ -30,4 +27,4 @@ $(OBJ_DIR)/%.o: %.cpp
 -include $(DEPS)
 
 clean:
-	rm -f $(TARGET) $(OBJS) $(DEPS)
+	rm -f $(TARGET) $(OBJS) $(DEPS) $(LIBS)

@@ -32,7 +32,7 @@ void jisToUtf8(uint16_t jis, iconv_t conv, uint32_t *out_utf8, uint8_t *out_leng
 
     if (res == (size_t)-1) {
         iconv_close(conv);
-        throw std::runtime_error("Failed to convert JIS" + std::to_string(jis) + " to UTF-8");
+        throw std::runtime_error("Failed to convert JIS " + std::to_string(jis) + " to UTF-8");
     }
 
     uint32_t utf8 = 0;

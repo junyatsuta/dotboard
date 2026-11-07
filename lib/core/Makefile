@@ -1,18 +1,23 @@
 include ../../config.mk
 
-SRCS := color.cpp dotboard.cpp input2board_converter.cpp
+SRCS := color.cpp dotboard.cpp input2board_converter.cpp utf8.cpp
 OBJS := $(addprefix $(OBJ_DIR)/,$(SRCS:.cpp=.o))
 DEPS := $(OBJS:.o=.d)
+TARGET := $(LIB_DIR)/libdotboard_core.a
 
 .PHONY: all clean
 
-all: $(OBJS)
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	@mkdir -p $(LIB_DIR)
+	ar rcs $@ $^
 
 $(OBJ_DIR)/%.o: %.cpp
 	@mkdir -p $(@D)
 	$(CXX) $(CPPFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS) $(DEPS)
+	rm -f $(OBJS) $(DEPS) $(TARGET)
 	
 -include $(DEPS)

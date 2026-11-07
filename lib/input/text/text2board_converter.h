@@ -34,9 +34,4 @@ public:
     }
 
     void convert() override;
-
-private:
-    int calcWidth(const std::vector<int> &glyph_indices);
-    void text2encodings(std::vector<uint32_t> & encodings);
-    int searchGlyphIndex(uint32_t encoding);
 };

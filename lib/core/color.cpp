@@ -36,8 +36,7 @@ std::vector<uint8_t> dotColor2rgb(DotColor dotColor) {
     return rgb;
 }
 
-DotColor nearestDotColor(const std::vector<uint8_t> &rgb)
-{
+DotColor rgb2NearestDotColor(const std::vector<uint8_t> &rgb) {
     DotColor nearestColor = DotColor::BLACK;
     int minDistance = 256 * 256 * 3; // Maximum possible distance squared
 

@@ -1,6 +1,7 @@
 TOP_DIR := $(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 BUILD_DIR := $(TOP_DIR)/build
 OBJ_ROOT := $(BUILD_DIR)/obj
+LIB_DIR := $(BUILD_DIR)/lib
 BIN_DIR := $(BUILD_DIR)/bin
 TOOL_BIN_DIR := $(BUILD_DIR)/tools
 GEN_DIR := $(BUILD_DIR)/gen

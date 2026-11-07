@@ -1,11 +1,16 @@
 include config.mk
 
-.PHONY: all tools lib app clean compdb
+.PHONY: all tools lib app clean compdb test
 
 all: tools lib app
 	$(MAKE) -C tools
 	$(MAKE) -C lib
 	$(MAKE) -C app
+
+test: tools lib tests
+	$(MAKE) -C tools
+	$(MAKE) -C lib
+	$(MAKE) -C tests test
 
 clean:
 	rm -rf $(BUILD_DIR)
